@@ -33,7 +33,6 @@ main {
   height: 100%;
   overflow: hidden;
 }
-
 .app-container > .app-grid {
   --app-size-ref: 100;
 
@@ -82,22 +81,6 @@ main {
   pointer-events: none;
 }
 
-.app-group {
-  --app-group-pos-x: calc(50% + ((var(--app-offset-x) + var(--x)) * 1px));
-  --app-group-pos-y: calc(50% + ((var(--app-offset-y) + var(--y)) * 1px));
-
-  position: absolute;
-  left: var(--app-group-pos-x);
-  top: var(--app-group-pos-y);
-  width: var(--app-bg-grid-size);
-  height: var(--app-bg-grid-size);
-  background-color: rgba(var(--app-group-bg-color), 0.3);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-
 .app-component {
   --app-component-pos-x: calc(((var(--app-offset-x) + var(--x)) * 1px));
   --app-component-pos-y: calc(((var(--app-offset-y) + var(--y)) * 1px));
@@ -107,34 +90,7 @@ main {
   top: var(--app-component-pos-y);
   min-width: var(--app-bg-grid-size);
   background-color: var(--app-component-bg-color);
-  border: 1px solid black;
   color: var(--app-component-text-color);
-  border-radius: 0.5rem;
-  display: flex;
-  flex-direction: column;
-}
-
-.app-component > .app-component-head {
-  width: 100%;
-  padding: 0.5rem;
-  background-color: #5f5f5f;
-}
-
-.app-component > .app-component-body {
-  width: 100%;
-  padding: 0.5rem;
-}
-
-.app-component > .app-component-input {
-  position: absolute;
-  right: 100%;
-  height: 100%;
-}
-
-.app-component > .app-component-output {
-  position: absolute;
-  left: 100%;
-  height: 100%;
 }
 
 .app-component > .app-component-connector {
@@ -145,10 +101,10 @@ main {
   background-color: red;
   z-index: 1;
 }
-.app-component > .app-component-connector.app-component-left-connector {
+.app-component > .app-component-connector.app-component-connector-left {
   right: 100%;
 }
-.app-component > .app-component-connector.app-component-right-connector {
+.app-component > .app-component-connector.app-component-connector-right {
   left: 100%;
 }
 
@@ -161,11 +117,35 @@ main {
   top: var(--app-connection-pos-y);
   width: 1px;
   height: calc(var(--dist) * 1px);
-  background-color: red;
   transform-origin: 0% 0%;
   rotate: calc(var(--deg) * 1deg);
+  background-color: red;
 }
-
 .app-connection.moving {
   pointer-events: none;
+}
+
+/* Grid App Extra */
+
+.app-component-block {
+  border: 1px solid black;
+  border-radius: 0.5rem;
+  display: flex;
+  flex-direction: column;
+}
+.app-component-block > .app-component-block-head {
+  width: 100%;
+  padding: 0.5rem;
+  background-color: #5f5f5f;
+}
+.app-component-block > .app-component-block-body {
+  width: 100%;
+  padding: 0.5rem;
+}
+
+.app-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }

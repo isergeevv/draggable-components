@@ -1,3 +1,155 @@
+class GridAppConnector {
+    constructor(label) {
+        this._label = label;
+        this._element = document.createElement('div');
+        this._element.gridConnector = this;
+        this._element.classList.add(`app-component-connector`, this.class);
+    }
+    get element() {
+        return this._element;
+    }
+    get class() {
+        return `app-component-connector-${this._label}`;
+    }
+    get component() {
+        const gridComponentElement = this._element.closest('.app-component');
+        if (!gridComponentElement) {
+            throw new Error('No grid component found for connector.');
+        }
+        return gridComponentElement.gridComponent;
+    }
+}
+
+class GridAppLineConnector extends GridAppConnector {
+    constructor(label) {
+        super(label);
+    }
+    onConnectionStart() {
+        // Implement connection start logic if needed
+        console.log(`Connection started for ${this.class}`);
+    }
+    onConnectionEnd() {
+        // Implement connection end logic if needed
+        console.log(`Connection ended for ${this.class}`);
+    }
+}
+
+class GridAppComponent {
+    constructor(config) {
+        this._type = config.type;
+        this._element = document.createElement('div');
+        this._element.gridComponent = this;
+        this._element.classList.add('app-component', this.class);
+        this._element.dataset['type'] = 'component';
+        this._element.dataset['componentType'] = this._type;
+        this._element.style.setProperty('--x', '0');
+        this._element.style.setProperty('--y', '0');
+        this.setBackgroundColor(config.defaultBackgroundColor);
+        this.setTextColor(config.defaultTextColor);
+    }
+    get type() {
+        return this._type;
+    }
+    get class() {
+        return `app-component-${this._type}`;
+    }
+    get element() {
+        return this._element;
+    }
+    getBackgroundColor() {
+        const bgColor = this._element.style.getPropertyValue('--app-component-bg-color');
+        return bgColor ? bgColor.split(',').map(Number) : [0, 0, 0];
+    }
+    setBackgroundColor(color) {
+        this._element.style.setProperty('--app-component-bg-color', color.join(', '));
+    }
+    getTextColor() {
+        const textColor = this._element.style.getPropertyValue('--app-component-text-color');
+        return textColor ? textColor.split(',').map(Number) : [0, 0, 0];
+    }
+    setTextColor(color) {
+        this._element.style.setProperty('--app-component-text-color', color.join(', '));
+    }
+    getPosition() {
+        return {
+            x: Number(this._element.style.getPropertyValue('--x')),
+            y: Number(this._element.style.getPropertyValue('--y')),
+        };
+    }
+    setPosition(position) {
+        this._element.style.setProperty('--x', position.x.toString());
+        this._element.style.setProperty('--y', position.y.toString());
+    }
+    move(move) {
+        const position = this.getPosition();
+        this.setPosition({
+            x: position.x - move.x,
+            y: position.y - move.y,
+        });
+    }
+}
+
+class GridAppBlockComponent extends GridAppComponent {
+    constructor() {
+        super({
+            type: 'block',
+            defaultBackgroundColor: [40, 46, 48],
+            defaultTextColor: [167, 178, 184],
+        });
+        const componentHeadElement = document.createElement('div');
+        componentHeadElement.classList.add(`${this.class}-head`);
+        componentHeadElement.innerText = 'Title';
+        this.element.append(componentHeadElement);
+        const componentBodyElement = document.createElement('div');
+        componentBodyElement.classList.add(`${this.class}-body`);
+        componentBodyElement.innerText = 'ASD';
+        this.element.append(componentBodyElement);
+        const leftConnector = new GridAppLineConnector('left');
+        const rightConnector = new GridAppLineConnector('right');
+        this.element.append(leftConnector.element, rightConnector.element);
+    }
+    get headElement() {
+        return this.element.querySelector(`.${this.class}-head`);
+    }
+    get bodyElement() {
+        return this.element.querySelector(`.${this.class}-body`);
+    }
+    getTitle() {
+        return this.headElement.innerText;
+    }
+    setTitle(value) {
+        this.headElement.innerText = value;
+    }
+    getBody() {
+        return this.bodyElement.innerText;
+    }
+    setBody(value) {
+        this.bodyElement.innerText = value;
+    }
+}
+
+class GridAppGrid {
+    constructor(config, initialOffset) {
+        this._config = config;
+        this._initialOffset = initialOffset;
+        this._element = document.createElement('div');
+        this._element.classList.add('app-grid');
+        this._element.style.setProperty('--app-bg-grid-size', config.size.toString());
+        this._element.style.setProperty('--app-offset-x', this._initialOffset.x.toString());
+        this._element.style.setProperty('--app-offset-y', this._initialOffset.y.toString());
+        this._element.style.setProperty('--app-zoom', config.zoom.default.toString());
+    }
+    get element() {
+        return this._element;
+    }
+    get initialOffset() {
+        return this._initialOffset;
+    }
+    get config() {
+        return this._config;
+    }
+}
+
 class GridAppConnection {
     constructor() {
         this._element = document.createElement('div');
@@ -32,22 +184,35 @@ class GridAppConnection {
             y: Number(this._element.style.getPropertyValue('--y2')),
         };
     }
-    setStartPosition(element, position) {
+    setStartElement(element) {
         this._startElement = element;
-        this._element.style.setProperty('--x1', position.x.toString());
-        this._element.style.setProperty('--y1', position.y.toString());
-        this._element.style.setProperty('--deg', '0');
+    }
+    setEndElement(element) {
+        this._endElement = element;
+    }
+}
+
+class GridAppLineConnection extends GridAppConnection {
+    constructor() {
+        super();
+    }
+    setStartPosition(element, position) {
+        this.setStartElement(element);
+        this.element.style.setProperty('--x1', position.x.toString());
+        this.element.style.setProperty('--y1', position.y.toString());
+        this.element.style.setProperty('--deg', '0');
     }
     setEndPosition(position, element) {
-        this._element.style.setProperty('--x2', position.x.toString());
-        this._element.style.setProperty('--y2', position.y.toString());
+        this.element.style.setProperty('--x2', position.x.toString());
+        this.element.style.setProperty('--y2', position.y.toString());
         const startPosition = this.startPosition;
         const deg = this.calcRotateDeg(startPosition, position);
         const distance = this.calcDistance(startPosition, position);
-        this._element.style.setProperty('--deg', deg.toString());
-        this._element.style.setProperty('--dist', distance.toString());
-        if (element)
-            this._endElement = element;
+        this.element.style.setProperty('--deg', deg.toString());
+        this.element.style.setProperty('--dist', distance.toString());
+        if (element) {
+            this.setEndElement(element);
+        }
     }
     calcRotateDeg(pos1, pos2) {
         const x = pos2.x - pos1.x;
@@ -63,30 +228,8 @@ class GridAppConnection {
     }
 }
 
-class GridAppGrid {
-    constructor(config, initialOffset) {
-        this._config = config;
-        this._initialOffset = initialOffset;
-        this._element = document.createElement('div');
-        this._element.classList.add('app-grid');
-        this._element.style.setProperty('--app-bg-grid-size', config.background.gridSize.toString());
-        this._element.style.setProperty('--app-offset-x', this._initialOffset.x.toString());
-        this._element.style.setProperty('--app-offset-y', this._initialOffset.y.toString());
-        this._element.style.setProperty('--app-zoom', config.zoom.default.toString());
-    }
-    get element() {
-        return this._element;
-    }
-    get initialOffset() {
-        return this._initialOffset;
-    }
-    get config() {
-        return this._config;
-    }
-}
-
 class GridApp {
-    constructor(appContainerElement, config) {
+    constructor(appContainerElement, config, customComponents = []) {
         this._element = appContainerElement;
         this._config = config;
         this._element.classList.add('app-container');
@@ -97,6 +240,7 @@ class GridApp {
         };
         this._grid = new GridAppGrid(config.grid, initialOffset);
         this._element.append(this._grid.element);
+        this._components = [{ type: 'block', component: GridAppBlockComponent }, ...customComponents];
         this._appPanelElement = document.createElement('div');
         this._appPanelElement.classList.add('app-panel', 'open');
         this._element.append(this._appPanelElement);
@@ -114,6 +258,9 @@ class GridApp {
     }
     get config() {
         return this._config;
+    }
+    get components() {
+        return this._components;
     }
     getOffset() {
         return {
@@ -136,6 +283,7 @@ class GridApp {
     }
     append(...components) {
         for (const component of components) {
+            console.log(component.element);
             this._grid.element.append(component.element);
         }
     }
@@ -152,11 +300,10 @@ class GridApp {
                 y: e.clientY,
             };
             const componentconnectionElement = target.closest('.app-component-connector');
-            console.log(componentconnectionElement);
             if (componentconnectionElement) {
                 const zoom = this.getZoom();
                 const offset = this.getOffset();
-                const connection = new GridAppConnection();
+                const connection = new GridAppLineConnection();
                 connection.setStartPosition(componentconnectionElement, {
                     x: (e.clientX - this._grid.initialOffset.x) / zoom + this._grid.initialOffset.x - offset.x,
                     y: (e.clientY - this._grid.initialOffset.y) / zoom + this._grid.initialOffset.y - offset.y,
@@ -251,61 +398,10 @@ class GridApp {
     }
 }
 
-class GridAppComponent {
-    constructor(config, position) {
-        this._element = document.createElement('div');
-        this._element.gridComponent = this;
-        this._element.classList.add('app-component');
-        this._element.dataset['type'] = 'component';
-        this._element.style.setProperty('--x', position.x.toString());
-        this._element.style.setProperty('--y', position.y.toString());
-        this._element.style.setProperty('--app-component-bg-color', config.backgroundColor.join(', '));
-        this._element.style.setProperty('--app-component-text-color', config.textColor.join(', '));
-        const componentHeadElement = document.createElement('div');
-        componentHeadElement.classList.add('app-component-head');
-        componentHeadElement.innerText = 'Title';
-        this._element.append(componentHeadElement);
-        const componentBodyElement = document.createElement('div');
-        componentBodyElement.classList.add('app-component-body');
-        componentBodyElement.innerText = 'ASD';
-        this._element.append(componentBodyElement);
-        const componentLeftConnectorElement = document.createElement('div');
-        componentLeftConnectorElement.classList.add('app-component-connector', 'app-component-left-connector');
-        this._element.append(componentLeftConnectorElement);
-        const componentRightConnectorElement = document.createElement('div');
-        componentRightConnectorElement.classList.add('app-component-connector', 'app-component-right-connector');
-        this._element.append(componentRightConnectorElement);
-    }
-    get element() {
-        return this._element;
-    }
-    get headElement() {
-        return this._element.querySelector('.app-component-head');
-    }
-    get bodyElement() {
-        return this._element.querySelector('.app-component-body');
-    }
-    getPosition() {
-        return {
-            x: Number(this._element.style.getPropertyValue('--x')),
-            y: Number(this._element.style.getPropertyValue('--y')),
-        };
-    }
-    setTitle(value) {
-        this.headElement.innerText = value;
-    }
-    move(move) {
-        const position = this.getPosition();
-        this._element.style.setProperty('--x', (position.x - move.x).toString());
-        this._element.style.setProperty('--y', (position.y - move.y).toString());
-    }
-}
-
+const gridAppElement = document.getElementById('gridApp');
 const gridAppConfig = {
     grid: {
-        background: {
-            gridSize: 10,
-        },
+        size: 10,
         zoom: {
             default: 2,
             min: 1,
@@ -317,21 +413,13 @@ const gridAppConfig = {
             y: 0,
         },
     },
-    component: {
-        backgroundColor: [40, 46, 48],
-        textColor: [167, 178, 184],
-    },
-    group: {
-        backgroundColor: [197, 116, 218],
-    },
     panel: {
         backgroundColor: [255, 255, 255],
     },
 };
-const gridAppElement = document.getElementById('gridApp');
 const app = new GridApp(gridAppElement, gridAppConfig);
-const component = new GridAppComponent(gridAppConfig.component, { x: -100, y: -100 });
+const component = new GridAppBlockComponent();
 component.setTitle('Component 1');
-const component2 = new GridAppComponent(gridAppConfig.component, { x: 100, y: 100 });
+const component2 = new GridAppBlockComponent();
 component2.setTitle('Component 2');
 app.append(component, component2);
